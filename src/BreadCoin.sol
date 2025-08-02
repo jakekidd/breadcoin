@@ -10,12 +10,12 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title BreadCoin - Just bread, just vibes
 ///  block-priced bread; price starts at 0 on deploy, +1 per block #inflation
-// Key Features:
-// 1. Linear pricing: 1 wei per block since launch #inflation
-// 2. Pay-to-knead mechanics with crumb rewards (TBD)
-// 3. Toast (burn) mechanism for deflation
-// 4. Random crumb airdrops for engagement. Maybe. We'll see. Ask me later.
-// 5. Owner can "accept" ETH. DM me with your location, we'll deliver
+/// Key Features:
+/// 1. Linear pricing: 1 wei per block since launch #inflation
+/// 2. Pay-to-knead mechanics with crumb rewards (TBD)
+/// 3. Toast (burn) mechanism for deflation
+/// 4. Random crumb airdrops for engagement. Maybe. We'll see. Ask me later.
+/// 5. Owner can "accept" ETH. DM me with your location, we'll deliver
 contract BreadCoin is ERC20, Ownable, ReentrancyGuard {
     uint256 public immutable genesisBlock;
     // 1 million loaves. What do I look like, a bank?
@@ -42,11 +42,6 @@ contract BreadCoin is ERC20, Ownable, ReentrancyGuard {
     function quote(uint256 numLoaves) public view returns (uint256) {
         require(numLoaves > 0, "loaves=0");
         uint256 unitPrice = price();
-        
-        // Bulk discount: 10% off for 100+ loaves
-        if (numLoaves >= 100) {
-            return (unitPrice * numLoaves * 90) / 100;
-        }
         return unitPrice * numLoaves;
     }
     
@@ -76,13 +71,7 @@ contract BreadCoin is ERC20, Ownable, ReentrancyGuard {
         require(maxLoaves > 0, "not enough ETH for even 1 loaf");
         require(totalSupply() + maxLoaves <= MAX_SUPPLY, "would exceed max supply");
         
-        // Apply bulk discount if applicable
-        uint256 actualCost = quote(maxLoaves);
-        if (actualCost > msg.value) {
-            // Recalculate without bulk discount
-            maxLoaves = msg.value / unitPrice;
-            actualCost = unitPrice * maxLoaves;
-        }
+        uint256 actualCost = unitPrice * maxLoaves;
         
         _mint(msg.sender, maxLoaves);
         

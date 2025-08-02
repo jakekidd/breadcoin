@@ -1,7 +1,7 @@
 # BreadCoin
 
 After extensive research and questionable decision-making, BreadCoin v1.0 is a bread-based currency. It cannot be exchanged for real bread, but maybe
-in the future it can, somewhere, somehow. We'll see. But it will cost extra, with inflation.
+in the future it can, somewhere, somehow. We'll see. But it will cost extra, with inflation. DM me for delivery
 
 ## Key Features
 
@@ -12,15 +12,15 @@ in the future it can, somewhere, somehow. We'll see. But it will cost extra, wit
 
 ## Core Mechanics
 
-The BreadCoin contract is designed to be straightforward but engaging, with features that control supply, pricing, and user interaction.
+The BreadCoin contract is designed to be straightforward. It has features that control supply, pricing, and user interaction.
 
 ### Pricing Model
 
-The price of BreadCoin is designed to increase over time in a predictable manner.
+The price of BreadCoin increases over time linearly, #inflation
 
 - **Linear Inflation**: The price for one BreadCoin starts at 1 wei and increases by 1 wei with every new block mined after the contract's deployment. The price can be checked at any time using the `price()` view function.
-- **Bulk Discount**: A 10% discount is automatically applied to the total cost when purchasing 100 or more loaves in a single transaction.
-- **Cost Calculation**: The `quote(numLoaves)` function allows users to get an exact cost for a specific number of loaves, including any applicable bulk discounts.
+- ~~**Bulk Discount**: A 10% discount is automatically applied to the total cost when purchasing 100 or more loaves in a single transaction.~~
+- **Cost Calculation**: The `quote(numLoaves)` function allows users to get an exact cost for a specific number of loaves. We removed the bulk discount after it caused a ruckus
 
 ### Acquiring BreadCoin (Baking)
 
@@ -40,13 +40,10 @@ Users can acquire BreadCoin by "baking" it, which is the contract's term for min
 - **Token Standard**: ERC20
 - **Decimals**: 0 (Tokens are not divisible)
 - **Max Supply**: 1,000,000 BREAD
-- **Security**: The contract inherits from OpenZeppelin's `Ownable` and `ReentrancyGuard` contracts to ensure secure ownership and prevent common vulnerabilities.
+- **Security**: OK
 
-## Development and Testing
+## Testing
 
-1.  Install Foundry: `curl -L https://foundry.paradigm.xyz | bash` and then run `foundryup`.
-2.  Install dependencies: `forge install`.
-
-### Testing
-
-Run the full test suite with `forge test`. The tests cover all core functions, pricing logic, access control, and edge cases.
+1.  Install Foundry if you really knead to test: `curl -L https://foundry.paradigm.xyz | bash`
+2.  Install dependencies: `forge install`
+3.  `forge b` or `forge test`
