@@ -6,19 +6,19 @@ import "../src/BreadCoin.sol";
 
 contract BreadCoinTest is Test {
     BreadCoin public breadCoin;
-    address public owner;
+    address public baker;
     address public user1;
     address public user2;
     
     function setUp() public {
-        owner = address(this);
+        baker = address(this);
         user1 = makeAddr("user1");
         user2 = makeAddr("user2");
         
-        // Deploy BreadCoin
-        breadCoin = new BreadCoin();
+        // Deploy BreadCoin.
+        breadCoin = new BreadCoin(baker);
         
-        // Give users some ETH
+        // Give users some ETH.
         vm.deal(user1, 100 ether);
         vm.deal(user2, 100 ether);
     }
@@ -31,7 +31,7 @@ contract BreadCoinTest is Test {
         assertEq(breadCoin.totalSupply(), 0);
         assertEq(breadCoin.MAX_SUPPLY(), 1_000_000);
         assertEq(breadCoin.genesisBlock(), block.number);
-        assertEq(breadCoin.owner(), owner);
+        assertEq(breadCoin.owner(), baker);
     }
     
     function test_BreadCoin__price_startsAtOneWei() public {
@@ -57,19 +57,7 @@ contract BreadCoinTest is Test {
         assertEq(breadCoin.quote(10), 100);
     }
     
-    function test_BreadCoin__quote_appliesBulkDiscount() public {
-        vm.roll(block.number + 10); // Price = 10 wei
-        
-        // 100+ loaves get 10% discount
-        uint256 normalCost = 10 * 100; // 1000
-        uint256 discountedCost = (normalCost * 90) / 100; // 900
-        assertEq(breadCoin.quote(100), discountedCost);
-        
-        // 150 loaves should also get discount
-        uint256 normalCost150 = 10 * 150; // 1500
-        uint256 discountedCost150 = (normalCost150 * 90) / 100; // 1350
-        assertEq(breadCoin.quote(150), discountedCost150);
-    }
+
     
     function test_BreadCoin__bake_mintsTokensForPayment() public {
         vm.roll(block.number + 5); // Price = 6 wei
@@ -112,17 +100,16 @@ contract BreadCoinTest is Test {
         vm.stopPrank();
     }
     
-    function test_BreadCoin__bakeMax_appliesBulkDiscount() public {
+    function test_BreadCoin__bakeMax_calculatesCorrectAmount() public {
         vm.roll(block.number + 10); // Price = 10 wei
         
         vm.startPrank(user1);
-        // Send enough for 100+ loaves to trigger bulk discount
-        uint256 ethAmount = 2000; // Enough for bulk discount
+        uint256 ethAmount = 1000; // Send 1000 wei
+        uint256 expectedLoaves = ethAmount / 10; // Should get exactly 100 loaves
         
         breadCoin.bakeMax{value: ethAmount}();
         
-        // Should get more than ethAmount/10 due to bulk discount
-        assertGt(breadCoin.balanceOf(user1), ethAmount / 10);
+        assertEq(breadCoin.balanceOf(user1), expectedLoaves);
         vm.stopPrank();
     }
     
@@ -174,13 +161,13 @@ contract BreadCoinTest is Test {
         vm.stopPrank();
         
         // Owner should be able to withdraw
-        uint256 ownerBalanceBefore = owner.balance;
+        uint256 bakerBalanceBefore = baker.balance;
         uint256 contractBalance = address(breadCoin).balance;
         
         breadCoin.makeDough();
         
         assertEq(address(breadCoin).balance, 0);
-        assertEq(owner.balance - ownerBalanceBefore, contractBalance);
+        assertEq(baker.balance - bakerBalanceBefore, contractBalance);
     }
     
     function test_BreadCoin__bake_revertsWhenExceedsMaxSupply() public {

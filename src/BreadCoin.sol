@@ -23,7 +23,7 @@ contract BreadCoin is ERC20, Ownable, ReentrancyGuard {
     
     mapping(address => uint256) public _crumbs; // Track how many times each user has kneaded by awarding crumbs, bonus points for kneady kneaders
     
-    constructor() ERC20("BreadCoin", "BREAD") Ownable(msg.sender) {
+    constructor(address baker) ERC20("BreadCoin", "BREAD") Ownable(baker) {
         genesisBlock = block.number;
     }
     
