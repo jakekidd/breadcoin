@@ -73,6 +73,13 @@ def deploy_breadcoin():
     
     # Load account.
     account = Account.from_key(private_key)
+    print(f"Deployer address: {account.address}")
+    print(f"Deployer balance: {w3.eth.get_balance(account.address) / 10**18:.4f} ETH")
+    
+    if w3.eth.get_balance(account.address) == 0:
+        print(f"Deployer address {account.address} has 0 ETH!")
+        print("Send some ETH to this address to pay for gas. But only if you trust them. I mean, it is the private key from your .env file. But do you trust yourself from earlier in time?")
+        return None
     
     # Load compiled contract (assumes you ran `forge build`).
     with open('out/BreadCoin.sol/BreadCoin.json', 'r') as f:
