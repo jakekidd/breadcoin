@@ -1,0 +1,14 @@
+# Foundry
+cache/
+out/
+lib/
+remappings.txt
+foundry.toml
+
+# Node
+node_modules/
+
+# General
+.DS_Store
+.env
+*.log 
