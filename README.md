@@ -8,7 +8,7 @@ in the future it can, somewhere, somehow. We'll see. But it will cost extra, wit
 - ERC-20 compliant (0 decimals - whole loaves only)
 - Initial supply: 123,000 BREAD (blessed number)
 - Max supply: 1,000,000 BREAD (sanity cap, we don't have unlimited bread)
-- Dynamic pricing: starts at 0 wei, +1 wei per block #inflation
+- Dynamic pricing: starts at 0.00001 ETH, +1 wei per block #inflation
 
 ## Core Mechanics
 
@@ -18,7 +18,8 @@ The BreadCoin contract is designed to be straightforward. It has features that c
 
 The price of BreadCoin increases over time linearly, #inflation
 
-- **Linear Inflation**: The price for one BreadCoin starts at 1 wei and increases by 1 wei with every new block mined after the contract's deployment. The price can be checked at any time using the `price()` view function.
+- **Floor Price**: 0.00001 ETH (10,000,000,000,000 wei) - because even bread has standards. This is the penthouse floor of bread pricing.
+- **Linear Inflation**: Starting from the floor price, the cost increases by 1 wei with every new block mined after the contract's deployment. The price can be checked at any time using the `price()` view function.
 - ~~**Bulk Discount**: A 10% discount is automatically applied to the total cost when purchasing 100 or more loaves in a single transaction.~~
 - **Cost Calculation**: The `quote(numLoaves)` function allows users to get an exact cost for a specific number of loaves. We removed the bulk discount after it caused a ruckus
 
@@ -28,6 +29,8 @@ Users can acquire BreadCoin by "baking" it, which is the contract's term for min
 
 - **`bake(numLoaves)`**: This function allows a user to mint an exact number of tokens. The user must send enough ETH to cover the cost, which is calculated based on the current price and quantity. Any excess ETH sent is automatically refunded.
 - **`bakeMax()`**: For convenience, a user can call this function and send an arbitrary amount of ETH. The contract will calculate the maximum number of loaves they can afford, mint them, and refund any remaining dust. I don't recommend you do this.
+
+**Important**: The bakery is closed on Sundays. Even bread needs to rest. Minting functions will revert on Sundays with a helpful message to come back Monday for fresh loaves.
 
 ### Key Functions
 

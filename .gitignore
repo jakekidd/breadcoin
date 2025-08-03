@@ -5,6 +5,9 @@ lib/
 remappings.txt
 foundry.toml
 
+# flat version, flat export, is yummier this way
+BreadCoinFlat.sol
+
 # Node
 node_modules/
 

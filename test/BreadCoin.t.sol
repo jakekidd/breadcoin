@@ -34,33 +34,34 @@ contract BreadCoinTest is Test {
         assertEq(breadCoin.owner(), baker);
     }
     
-    function test_BreadCoin__price_startsAtOneWei() public {
-        // At genesis block, price should be 1 wei (minimum)
-        assertEq(breadCoin.price(), 1);
+    function test_BreadCoin__price_startsAtFloorPrice() public {
+        // At genesis block, price should be FLOOR_PRICE (0.00001 ETH)
+        assertEq(breadCoin.price(), 0.00001 ether);
     }
     
     function test_BreadCoin__price_increasesWithBlocks() public {
         // Move forward 10 blocks
         vm.roll(block.number + 10);
-        assertEq(breadCoin.price(), 10); // age = 10, price = 10 (not 0 so returns age)
+        assertEq(breadCoin.price(), 0.00001 ether + 10); // FLOOR_PRICE + age = 10^13 + 10
         
         // Move forward another 5 blocks
         vm.roll(block.number + 5);
-        assertEq(breadCoin.price(), 15); // age = 15, price = 15
+        assertEq(breadCoin.price(), 0.00001 ether + 15); // FLOOR_PRICE + age = 10^13 + 15
     }
     
     function test_BreadCoin__quote_calculatesCorrectCost() public {
-        vm.roll(block.number + 10); // Price = 10 wei
+        vm.roll(block.number + 10); // Price = FLOOR_PRICE + 10 wei
+        uint256 expectedPrice = 0.00001 ether + 10;
         
-        assertEq(breadCoin.quote(1), 10);
-        assertEq(breadCoin.quote(5), 50);
-        assertEq(breadCoin.quote(10), 100);
+        assertEq(breadCoin.quote(1), expectedPrice);
+        assertEq(breadCoin.quote(5), expectedPrice * 5);
+        assertEq(breadCoin.quote(10), expectedPrice * 10);
     }
     
 
     
     function test_BreadCoin__bake_mintsTokensForPayment() public {
-        vm.roll(block.number + 5); // Price = 6 wei
+        vm.roll(block.number + 5); // Price = FLOOR_PRICE + 5 wei
         
         vm.startPrank(user1);
         uint256 cost = breadCoin.quote(10);
@@ -72,10 +73,10 @@ contract BreadCoinTest is Test {
     }
     
     function test_BreadCoin__bake_refundsExcessPayment() public {
-        vm.roll(block.number + 5); // Price = 6 wei
+        vm.roll(block.number + 5); // Price = FLOOR_PRICE + 5 wei
         
         vm.startPrank(user1);
-        uint256 cost = breadCoin.quote(10); // 60 wei
+        uint256 cost = breadCoin.quote(10);
         uint256 overpayment = cost + 1000; // Pay extra
         
         uint256 balanceBefore = user1.balance;
@@ -88,11 +89,12 @@ contract BreadCoinTest is Test {
     }
     
     function test_BreadCoin__bakeMax_mintsMaxPossibleTokens() public {
-        vm.roll(block.number + 10); // Price = 10 wei
+        vm.roll(block.number + 10); // Price = FLOOR_PRICE + 10 wei
+        uint256 currentPrice = 0.00001 ether + 10;
         
         vm.startPrank(user1);
-        uint256 ethAmount = 1000; // Send 1000 wei
-        uint256 expectedLoaves = ethAmount / 10; // Should get 100 loaves (no bulk discount)
+        uint256 ethAmount = currentPrice * 100; // Enough for 100 loaves
+        uint256 expectedLoaves = ethAmount / currentPrice;
         
         breadCoin.bakeMax{value: ethAmount}();
         
@@ -101,11 +103,12 @@ contract BreadCoinTest is Test {
     }
     
     function test_BreadCoin__bakeMax_calculatesCorrectAmount() public {
-        vm.roll(block.number + 10); // Price = 10 wei
+        vm.roll(block.number + 10); // Price = FLOOR_PRICE + 10 wei
+        uint256 currentPrice = 0.00001 ether + 10;
         
         vm.startPrank(user1);
-        uint256 ethAmount = 1000; // Send 1000 wei
-        uint256 expectedLoaves = ethAmount / 10; // Should get exactly 100 loaves
+        uint256 ethAmount = currentPrice * 100; // Enough for exactly 100 loaves
+        uint256 expectedLoaves = ethAmount / currentPrice;
         
         breadCoin.bakeMax{value: ethAmount}();
         
@@ -188,10 +191,10 @@ contract BreadCoinTest is Test {
     }
     
     function test_BreadCoin__bake_revertsForInsufficientPayment() public {
-        vm.roll(block.number + 10); // Price = 10 wei
+        vm.roll(block.number + 10); // Price = FLOOR_PRICE + 10 wei
         
         vm.startPrank(user1);
-        uint256 cost = breadCoin.quote(10); // 100 wei
+        uint256 cost = breadCoin.quote(10);
         vm.expectRevert("not a soup kitchen");
         breadCoin.bake{value: cost - 1}(10); // Pay 1 wei less
         vm.stopPrank();
@@ -219,11 +222,12 @@ contract BreadCoinTest is Test {
     }
     
     function test_BreadCoin__bakeMax_revertsForInsufficientETH() public {
-        vm.roll(block.number + 100); // High price = 100 wei
+        vm.roll(block.number + 100); // High price = FLOOR_PRICE + 100 wei
+        uint256 currentPrice = 0.00001 ether + 100;
         
         vm.startPrank(user1);
         vm.expectRevert("not enough ETH for even 1 loaf");
-        breadCoin.bakeMax{value: 50}(); // Not enough for 1 loaf
+        breadCoin.bakeMax{value: currentPrice - 1}(); // Not enough for 1 loaf
         vm.stopPrank();
     }
     
@@ -251,6 +255,60 @@ contract BreadCoinTest is Test {
             assertEq(breadCoin.balanceOf(user1), loaves);
         }
         vm.stopPrank();
+    }
+    
+    function test_BreadCoin__bake_revertsOnSunday() public {
+        // Set timestamp to Sunday (day 0)
+        // Unix epoch started on Thursday, so Sunday would be day 3 of the first week
+        // Sunday January 4, 1970 00:00:00 UTC = 259200 seconds since epoch
+        vm.warp(259200); // This is a Sunday
+        
+        vm.roll(block.number + 10);
+        
+        vm.startPrank(user1);
+        uint256 cost = breadCoin.quote(1);
+        vm.expectRevert("bakery closed on sundays. it's God's day");
+        breadCoin.bake{value: cost}(1);
+        vm.stopPrank();
+    }
+    
+    function test_BreadCoin__bakeMax_revertsOnSunday() public {
+        // Set timestamp to Sunday
+        vm.warp(259200); // This is a Sunday
+        
+        vm.roll(block.number + 10);
+        
+        vm.startPrank(user1);
+        uint256 ethAmount = 1 ether;
+        vm.expectRevert("bakery closed on sundays. it's God's day");
+        breadCoin.bakeMax{value: ethAmount}();
+        vm.stopPrank();
+    }
+    
+    function test_BreadCoin__bake_worksOnMonday() public {
+        // Set timestamp to Monday (day 1)
+        // Monday January 5, 1970 00:00:00 UTC = 345600 seconds since epoch
+        vm.warp(345600); // This is a Monday
+        
+        vm.roll(block.number + 10);
+        
+        vm.startPrank(user1);
+        uint256 cost = breadCoin.quote(1);
+        breadCoin.bake{value: cost}(1);
+        assertEq(breadCoin.balanceOf(user1), 1);
+        vm.stopPrank();
+    }
+    
+    function test_BreadCoin__isBakeryOpen_returnsFalseOnSunday() public {
+        vm.warp(259200); // Sunday
+        assertEq(breadCoin.isBakeryOpen(), false);
+        assertEq(breadCoin.getCurrentDay(), 0);
+    }
+    
+    function test_BreadCoin__isBakeryOpen_returnsTrueOnMonday() public {
+        vm.warp(345600); // Monday  
+        assertEq(breadCoin.isBakeryOpen(), true);
+        assertEq(breadCoin.getCurrentDay(), 1);
     }
     
     receive() external payable {}
