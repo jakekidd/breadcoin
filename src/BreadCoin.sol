@@ -28,7 +28,8 @@ contract BreadCoin is ERC20, Ownable, ReentrancyGuard {
     
     mapping(address => uint256) public _crumbs; // Track how many times each user has kneaded by awarding crumbs, bonus points for kneady kneaders
     
-    /// @notice Check if it's Sunday (God's day, bread bakery is closed)
+    /// @notice Check if it's Sunday (God's day, bread bakery is closed so we can rest and go to church)
+    /// @dev This assumes we launch on a Sunday. We'll be closed on our first day, it's just a hype day.
     modifier notOnSunday() {
         // Unix timestamp: Sunday = 0, Monday = 1, ..., Saturday = 6
         uint256 dayOfWeek = (block.timestamp / 86400 + 4) % 7; // +4 adjusts for Unix epoch starting on Thursday
