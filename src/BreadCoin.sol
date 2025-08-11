@@ -22,9 +22,8 @@ contract BreadCoin is ERC20, Ownable, ReentrancyGuard {
     uint256 public constant MAX_SUPPLY = 1_000_000;
     
     // Floor price: 0.00001 ETH because even bread has standards
-    // This isn't the ground floor, this is the penthouse floor! Get in on it
-    // We're not running a charity here - bread doesn't grow on trees, it grows on... grain? Or something. Idk I'm not a farmer. You are. You're the farmer
-    uint256 public constant FLOOR_PRICE = 0.00001 ether; // 10^13 wei - fancy bread deserves fancy prices
+    // We're not running a charity here - bread doesn't grow on trees, it grows on... grain? Or something. Idk I'm not a farmer. You are. You're the farmer, anon
+    uint256 public constant FLOOR_PRICE = 0.00001 ether; // 10^13 wei - it's good bread
     
     mapping(address => uint256) public _crumbs; // Track how many times each user has kneaded by awarding crumbs, bonus points for kneady kneaders
     
@@ -119,7 +118,7 @@ contract BreadCoin is ERC20, Ownable, ReentrancyGuard {
         _crumbs[msg.sender]++;
 
         // Waste some gas for dramatic effect
-        // Commented out to save gas actually. Now we're more efficient, saving the earth to bake more bread per sq ft.
+        // Commented out to save gas actually. Now we're more efficient, saving the earth to bake more bread per sq km.
         // for (uint256 i = 0; i < (bread[msg.sender] % 10); i++) {
         //     keccak256(abi.encode(block.timestamp, msg.sender, i));
         // }
